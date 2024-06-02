@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>2D 마인크래프트 게임</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+      cursor: crosshair;
+      float: left;
+    }
+    .mark-canvas {
+      float: left;
+      margin-left: 20px;
+    }
+    .mark-image {
+      width: 400px;
+      height: 200px;
+      background-image: url('https://i.namu.wiki/i/TZifnKGRMd7OOt_divFhvs-XV0rWS3jIIy5eXaWGsv7w1RK7xNpgm_yE6RW5X4TLY3j8LpF10hejXNXlYVQmzw.webp');
+      background-size: cover;
+    }
+    .mark-text {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <div class="mark-canvas">
+    <div class="mark-image"></div>
+    <div class="mark-text">마크 캔버스
+        1,2,3,4번으로 블럭변경 가능, 기본은 2번입니다
+    </div>
+  </div>
+  <script>
+    // 캔버스 설정
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // 블록 크기 및 게임 세팅
+    const BLOCK_SIZE = 32;
+    const WORLD_WIDTH = 32;
+    const WORLD_HEIGHT = 24;
+
+    // 블록 타입
+    const BLOCK_TYPES = {
+      GRASS: 0,
+      DIRT: 1,
+      STONE: 2,
+      WOOD: 3,
+      EMPTY: -1,
+    };
+
+    // 게임 월드 데이터
+    let gameWorld = [];
+    for (let y = 0; y < WORLD_HEIGHT; y++) {
+      gameWorld[y] = [];
+      for (let x = 0; x < WORLD_WIDTH; x++) {
+        if (y === WORLD_HEIGHT - 1) {
+          gameWorld[y][x] = BLOCK_TYPES.DIRT;
+        } else {
+          gameWorld[y][x] = BLOCK_TYPES.GRASS;
+        }
+      }
+    }
+
+    // 블록 그리기 함수
+    function drawBlock(x, y, type) {
+      const color = [
+        "#6c8c3a", // 잔디
+        "#a36f35", // 흙
+        "#7c7c7c", // 돌
+        "#986930", // 나무
+        "transparent", // 빈 공간
+      ][type];
+      ctx.fillStyle = color;
+      ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+    }
+
+    // 게임 월드 그리기
+    function renderWorld() {
+      for (let y = 0; y < WORLD_HEIGHT; y++) {
+        for (let x = 0; x < WORLD_WIDTH; x++) {
+          drawBlock(x, y, gameWorld[y][x]);
+        }
+      }
+    }
+
+    // 스티브 캐릭터 그리기
+    function drawSteve(x, y) {
+      ctx.fillStyle = "#0000ff"; // 파란색
+      ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+    }
+
+    // 마우스 및 키 이벤트 처리
+    let isDrawing = false;
+    let currentBlockType = BLOCK_TYPES.DIRT;
+    let isDeletingMode = false;
+    let steveX = 0;
+    let steveY = 0;
+
+    canvas.addEventListener("mousedown", (e) => {
+      isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      steveX = Math.floor((e.clientX - rect.left) / BLOCK_SIZE);
+      steveY = Math.floor((e.clientY - rect.top) / BLOCK_SIZE);
+      if (e.button === 0) { // 왼쪽 클릭
+        if (isDeletingMode) {
+          gameWorld[steveY][steveX] = BLOCK_TYPES.EMPTY;
+        } else {
+          gameWorld[steveY][steveX] = currentBlockType;
+        }
+      }
+      drawBlock(steveX, steveY, gameWorld[steveY][steveX]);
+    });
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (isDrawing) {
+        const rect = canvas.getBoundingClientRect();
+        steveX = Math.floor((e.clientX - rect.left) / BLOCK_SIZE);
+        steveY = Math.floor((e.clientY - rect.top) / BLOCK_SIZE);
+        if (e.button === 0) { // 왼쪽 클릭
+          if (isDeletingMode) {
+            gameWorld[steveY][steveX] = BLOCK_TYPES.EMPTY;
+          } else {
+            gameWorld[steveY][steveX] = currentBlockType;
+          }
+        }
+        drawBlock(steveX, steveY, gameWorld[steveY][steveX]);
+      }
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      isDrawing = false;
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "d") {
+        isDeletingMode = true;
+      } else if (e.key === "1") {
+        currentBlockType = BLOCK_TYPES.GRASS;
+      } else if (e.key === "2") {
+        currentBlockType = BLOCK_TYPES.DIRT;
+      } else if (e.key === "3") {
+        currentBlockType = BLOCK_TYPES.STONE;
+      } else if (e.key === "4") {
+        currentBlockType = BLOCK_TYPES.WOOD;
+      }
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "d") {
+        isDeletingMode = false;
+      }
+    });
+
+    // 게임 루프
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      renderWorld();
+      drawSteve(steveX, steveY);
+      requestAnimationFrame(gameLoop);
+    }
+
+    // 게임 시작
+    gameLoop();
+  </script>
+</body>
+</html>
